@@ -90,7 +90,14 @@ public class Rest{
 			delegate.getEntity(String.class)
 		}
 		ClientResponse.metaClass.requireContentType={type->
-			if(delegate.type!=type as MediaType){
+			if(!delegate.hasContentType(type)){
+				if(Rest.contentTypeFailureHandler) Rest.contentTypeFailureHandler.call(type,delegate)
+				else throw new RuntimeException("Expected ${type}, but response was ${delegate.type}: ${delegate}")
+			}
+			delegate
+		}
+		ClientResponse.metaClass.requireCompatibleType={type->
+			if(!delegate.hasCompatibleType(type)){
 				if(Rest.contentTypeFailureHandler) Rest.contentTypeFailureHandler.call(type,delegate)
 				else throw new RuntimeException("Expected ${type}, but response was ${delegate.type}: ${delegate}")
 			}
@@ -98,6 +105,9 @@ public class Rest{
 		}
 		ClientResponse.metaClass.hasContentType={type->
 			delegate.type==type as MediaType
+		}
+		ClientResponse.metaClass.hasCompatibleType={type->
+			delegate.type.isCompatible(type as MediaType)
 		}
 		ClientResponse.metaClass.requireStatus={status->
 			if(delegate.status!=status){
@@ -114,9 +124,6 @@ public class Rest{
 			map?.each{
 				delegate.header(it.key,it.value)
 			}
-		}
-		MediaType.metaClass.hasCompatibleType={type->
-			delegate.type.isCompatible(type as MediaType)
 		}
 	}
 
