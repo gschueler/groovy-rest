@@ -1,6 +1,6 @@
 # Groovy Rest
 
-A simple Groovy script wrapping the Jersey REST client library.
+A simple Groovy script wrapping the [Jersey REST client library](http://jersey.java.net/).
 
 Provides an easy way of using RESTful APIs with Groovy, using either static method calls or objects.
 
@@ -19,20 +19,20 @@ Statically import the HTTP primitive operations (GET,POST,PUT,DELETE), or use th
     import static Rest.GET
     import static Rest.POST
 
-    def result = GET 'http://example.com/api/sometthing/resource'
-    def result2 = POST 'http://example.com/api/sometthing/resource', 'Text content'
+    def response = GET 'http://example.com/api/sometthing/resource'
+    def response2 = POST 'http://example.com/api/sometthing/resource', 'Text content'
 
 You can pass Headers and query parameters as arguments to the operations. 
     
-    result = GET 'http://example.com/api/sometthing/resource', ['X-My-Header':'abc'], [q:'searchterm']
+    response = GET 'http://example.com/api/sometthing/resource', ['X-My-Header':'abc'], [q:'searchterm']
 
 PUT and POST also accept either string content, or a closure that will build XML.  If using a closure, specify it last.
 
-    result2 = POST 'http://example.com/api/sometthing/resource', 'Text content', ['X-My-Header':'abc'], [q:'searchterm']
+    response2 = POST 'http://example.com/api/sometthing/resource', 'Text content', ['X-My-Header':'abc'], [q:'searchterm']
 
     //use a closure to build xml
 
-    result2 = POST('http://example.com/api/sometthing/resource', ['X-My-Header':'abc'], [q:'searchterm']){
+    response2 = POST('http://example.com/api/sometthing/resource', ['X-My-Header':'abc'], [q:'searchterm']){
         mycontent{
             myelement(someattribute: 'hello'){
                 this('contains text')
@@ -80,16 +80,17 @@ The result of all requests is the Jersey [ClientResponse](http://jersey.java.net
 
 Some sugar for ClientResponse has been added:
 
-    def dom = result.XML //parse XML response with Groovy XmlParser.
-    def text = result.text //return content as a String
-    result.hasContentType 'text/xml' //returns true/false
-    result.hasCompatibleType '*/xml' //returns true/false, will match wildcards
-    result.requireContentType 'text/xml' //throws an exception, or calls a handler if the content type doesn't match, otherwise returns the ClientResponse
-    result.requireStatus 201 //throws an exception, or calls a handler if the result status doesn't match, otherwise returns the ClientResponse
+    def dom = response.XML //parse XML response with Groovy XmlParser.
+    def text = response.text //return content as a String
+    response.hasContentType 'text/xml' //returns true/false
+    response.hasCompatibleType '*/xml' //returns true/false, will match wildcards
+    response.requireContentType 'text/xml' //throws an exception, or calls a handler if the content type doesn't match, otherwise returns the ClientResponse
+    response.requireCompatibleType '*/xml' //throws an exception, or calls a handler if the content type doesn't match, otherwise returns the ClientResponse
+    response.requireStatus 201 //throws an exception, or calls a handler if the response status doesn't match, otherwise returns the ClientResponse
 
-We can use this to chain our request build:
+We can use this to chain our request and response checks:
 
-    def dom = GET('http://example.com/api/sometthing/resource.xml')
+    def dom = POST('http://example.com/api/sometthing/resource','data')
                 .requireContentType('text/xml')
                 .requireStatus(201)
                 .XML
@@ -114,38 +115,38 @@ You can define default handlers for certain failure types, such as generic failu
 
 By default, any HTTP status outside of the 20x range is considered a failure.
 
-Here is our API handler that can parse the API error response:
+Here is our API handler for handling our fictional API's error responses within a script:
 
     def apiErrorHandler(response){
         def err = response.XML
-        die "API Error: ${err.'@apiErrorCode'}: ${err.'@errorMessage'}"
+        throw new RuntimeException("API Error: ${err.'@apiErrorCode'}: ${err.'@errorMessage'}")
     }
 
-Assign generic failure handler for HTTP status codes that are not succesful:
+We assign a generic failure handler for HTTP status codes that are not succesful, and use our custom API error handler if the content type matches:
 
     Rest.failureHandler={response->
         if(response.hasContentType('application/my.api.error+xml')){
             apiErrorHandler(response)
         }else{
-            die("Request failed: ${response}")
+            throw new RuntimeException("Request failed: ${response}")
         }
     }
 
-Assign a failure handler for unexpected content type:
+We can also assign a failure handler for unexpected content type, which also defers to the API error handler for the appropriate content type:
 
     Rest.contentTypeFailureHandler={type,response->
         if(response.hasContentType('application/my.api.error+xml')){
             apiErrorHandler(response)
         }else{
-            die("Expected ${type}, but response was ${response.type}: ${response}")
+            throw new RuntimeException("Expected ${type}, but response was ${response.type}: ${response}")
         }
     }
 
-Now `requireContentType` and `requireStatus` will call these handlers if they fail.
+Now we can perform our requests, and calls to `requireContentType` and `requireStatus` end up calling these handlers on failure.
 
 # Debugging
 
-All requests/responses be output on the console by calling `Rest.debug(PrintStream)`:
+All requests/responses can be printed by calling `Rest.debug(PrintStream)`:
 
     if(isDebug){
         Rest.debug(System.out)
