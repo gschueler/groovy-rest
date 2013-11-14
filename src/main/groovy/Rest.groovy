@@ -3,10 +3,10 @@
 @Grab(module="jersey-core", group="com.sun.jersey",version="1.17")
 import com.sun.jersey.api.client.*
 import javax.ws.rs.core.MultivaluedMap
-import javax.ws.rs.core.util.MultivaluedMapImpl
 import javax.ws.rs.core.MediaType
 import com.sun.jersey.api.representation.Form
 import com.sun.jersey.api.client.filter.LoggingFilter
+import com.sun.jersey.core.util.MultivaluedMapImpl
 import groovy.xml.MarkupBuilder
 
 /**
