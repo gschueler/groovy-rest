@@ -227,7 +227,7 @@ public class Rest{
 
 	private query(params=[:]){
 		if(params){
-			MultivaluedMap<String, String> qparams = MultivaluedMapImpl();
+			MultivaluedMap<String, String> qparams = new MultivaluedMapImpl();
 			qparams.putAll(params)
 			return resource.queryParams(qparams)
 		}
