@@ -1,8 +1,9 @@
 #!/usr/bin/env groovy
-@Grab(module="jersey-client", group="com.sun.jersey",version="1.12")
-@Grab(module="jersey-core", group="com.sun.jersey",version="1.12")
+@Grab(module="jersey-client", group="com.sun.jersey",version="1.17")
+@Grab(module="jersey-core", group="com.sun.jersey",version="1.17")
 import com.sun.jersey.api.client.*
 import javax.ws.rs.core.MultivaluedMap
+import javax.ws.rs.core.util.MultivaluedMapImpl
 import javax.ws.rs.core.MediaType
 import com.sun.jersey.api.representation.Form
 import com.sun.jersey.api.client.filter.LoggingFilter
@@ -228,7 +229,9 @@ public class Rest{
 	private query(params=[:]){
 		if(params){
 			MultivaluedMap<String, String> qparams = new MultivaluedMapImpl();
-			qparams.putAll(params)
+			params.each{String k,String v->
+				qparams.putSingle(k,v)
+			}
 			return resource.queryParams(qparams)
 		}
 		resource
@@ -317,8 +320,8 @@ public class Rest{
 	 */
 	public get(headers=[:],params=[:]){
 		makeRequest(build(headers,params)){
-        	get(ClientResponse.class);
-        }
+			get(ClientResponse.class);
+		}
 	}
 	/**
 	 * POST request to this URL.
@@ -378,8 +381,8 @@ public class Rest{
 	 */
 	public delete(headers=[:],params=[:]){
 		makeRequest(build(headers,params)){
-        	delete(ClientResponse.class);
-        }
+			delete(ClientResponse.class);
+		}
 	}
 	def String toString(){
 		resource.toString()
