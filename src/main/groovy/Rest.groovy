@@ -146,6 +146,10 @@ public class Rest{
 	 * Closure that will be called if the response is not a successful status value. Argument is a ClientResponse object.
 	 */
 	def static failureHandler
+	/** 
+	 * Instance failure handler called if Rest instance has failure
+	 */
+	def onFailure
 	/**
 	 * Closure that will be called if ClientResponse.requireContentType doesn't match the response. Arguments are (content type, response)
 	 */
@@ -233,9 +237,9 @@ public class Rest{
 	}
 	private makeRequest(builder,Closure clos){
 		def response=builder.with(mock?:clos)
-		
-		if(failureHandler && (response.status <200 || response.status>=300)){
-			failureHandler(response)
+		def onfail=onFailure?:failureHandler
+		if(onfail && (response.status <200 || response.status>=300)){
+			onfail(response)
 		}
 		response
 	}
