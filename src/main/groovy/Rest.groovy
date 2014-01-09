@@ -183,6 +183,14 @@ public class Rest{
 	 * it will be used.  If it is a relative URL and the static baseUrl has been set, it will
 	 * be added relative to the baseUrl.
 	 */
+	public Rest(String path,Map pathParams){
+		this(path.replaceAll(/\{([^}]+)\}/){ pathParams[it[1]] ?: it[0] })
+	}
+	/**
+	 * Create a new Rest given the URL path. If the path is an absolute URL, 
+	 * it will be used.  If it is a relative URL and the static baseUrl has been set, it will
+	 * be added relative to the baseUrl.
+	 */
 	public Rest(String path){
 		if(baseUrl && !path.startsWith('http')){
 			resource=client.resource(baseUrl).path(path)
@@ -197,6 +205,12 @@ public class Rest{
 	 * Override the '+' operator to support appending a URL path to a Rest instance.
 	 */
 	public Rest plus(String path){
+		new Rest(resource.path(path))
+	}
+	public Rest path(String path, Map pathParams){
+		return path(path.replaceAll(/\{([^}]+)\}/){ pathParams[it[1]] ?: it[0] })
+	}
+	public Rest path(String path){
 		new Rest(resource.path(path))
 	}
 	/**
